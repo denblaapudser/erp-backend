@@ -14,10 +14,14 @@ class CreateAdminUser extends Seeder
      */
     public function run(): void
     {
-        User::create([
+        $user = User::firstOrCreate(
+            ['email' => 'mattias@mkieler.com'],
+            [
             'name' => 'Mattias Kieler',
-            'email' => 'mattias@mkieler.com',
             'password' => bcrypt('test1234')
-        ])->accesses()->attach(UserAccess::all()->pluck('id'));
+            ]
+        );
+
+        $user->accesses()->sync(UserAccess::all()->pluck('id'));
     }
 }

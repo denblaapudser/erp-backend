@@ -17,7 +17,8 @@ class DatabaseSeeder extends Seeder
         //call other seeders
         $this->call([
             UserAccesses::class,
-            CreateAdminUser::class
+            CreateAdminUser::class,
+            NotificationTypeSeeder::class,
         ]);
     }
 }

@@ -18,11 +18,17 @@ class UserController extends Controller
             'search' => 'nullable|string|max:255',
             'perPage' => 'nullable|integer|min:1|max:100',
         ]);
+        
+        $query = User::query();
 
-        $test = User::where('email', 'like', "%{$request->search}%")
-            ->orWhere('name', 'like', "%{$request->search}%")
-            ->paginate($request->perPage ?? 20);
-        return $test;
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('email', 'like', "%{$request->search}%")
+                  ->orWhere('name', 'like', "%{$request->search}%");
+            });
+        }
+
+        return $query->paginate($request->perPage ?? 20);
     }
 
     public function updateOrCreate(Request $request)

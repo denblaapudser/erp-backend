@@ -3,14 +3,26 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\LowInventoryStockAlert;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Notifications\Notification;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
+
+    protected static function booted(): void
+    {
+        static::created(function (User $user) {
+            $notificationTypes = NotificationType::all();
+            foreach ($notificationTypes as $notificationType) {
+                $user->notificationTypes()->attach($notificationType->id, ['is_active' => $notificationType->send_by_default]);
+            }
+        });
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -68,6 +80,11 @@ class User extends Authenticatable
         return $this->belongsToMany(UserAccess::class);
     }
 
+    public function notificationTypes()
+    {
+        return $this->belongsToMany(NotificationType::class)->withPivot('is_active');
+    }
+
     public function getFirstNameAttribute(): string
     {
         return explode(' ', $this->name)[0];
@@ -77,5 +94,17 @@ class User extends Authenticatable
     {
         $parts = explode(' ', $this->name);
         return count($parts) > 1 ? $parts[count($parts) - 1] : '';
+    }
+
+    /**
+     * @param Notification $notification
+     * @return void
+     */
+    public function scopeRecipientsForNotificationType($query, $type)
+    {
+        return $query->whereHas('notificationTypes', function ($q) use ($type) {
+            $q->where('type', $type)
+              ->where('is_active', true);
+        });
     }
 }

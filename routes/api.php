@@ -17,7 +17,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/users/bulk', [UserController::class, 'bulkDelete']);
     Route::delete('/users/{id}', [UserController::class, 'delete'])->where('id', '[0-9]+');
 
-    Route::get('inventory', [InventoryController::class, 'list']);
+    Route::get('inventory/products', [InventoryController::class, 'listProducts']);
 
     Route::get('user/accesses', [AccessController::class, 'list']);
 });
