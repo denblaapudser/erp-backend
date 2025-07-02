@@ -107,4 +107,9 @@ class User extends Authenticatable
               ->where('is_active', true);
         });
     }
+
+    public function activities()
+    {
+        return $this->hasMany(Activity::class);
+    }
 }

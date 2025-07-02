@@ -17,21 +17,50 @@ class InventoryProducts extends Model
         'qty',
         'should_alert',
         'alert_threshold',
+        'note',
+        'restock_url',
+        'image_id',
+    ];
+
+    protected $casts = [
+        'should_alert' => 'boolean',
+    ];
+
+    protected $with = [
+        'image',
+    ];
+
+    protected $appends = [
+        'image_url',
     ];
 
     protected static function booted()
     {
-        // Trigger notification when product is updated and stock is lower than or equal to the alert threshold
         static::updated(function ($product) {
-            if ($product->should_alert && $product->qty <= $product->alert_threshold) {
-                $product->sendLowStockAlert();
+            // Only send notification if qty just crossed the threshold
+            if (
+                $product->should_alert &&
+                $product->qty <= $product->alert_threshold &&
+                $product->getOriginal('qty') > $product->alert_threshold
+            ) {
+                $users = User::recipientsForNotificationType(LowInventoryStockAlert::class)->get();
+                Notification::send($users, new LowInventoryStockAlert($product));
             }
         });
     }
 
-    public function sendLowStockAlert() : void
+    public function activities()
     {
-        $users = User::recipientsForNotificationType(LowInventoryStockAlert::class)->get();
-        Notification::send($users, new LowInventoryStockAlert($this));
+        return $this->morphMany(Activity::class, 'subject');
+    }
+
+    public function image()
+    {
+        return $this->belongsTo(Image::class, 'image_id');
+    }
+
+    public function getImageUrlAttribute()
+    {
+        return $this->image?->url;
     }
 }

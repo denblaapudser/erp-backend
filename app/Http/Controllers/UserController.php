@@ -2,39 +2,37 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Services\ActivityService;
+use App\Services\UserService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    public function authenticatedUser(Request $request)
+    public function authenticatedUser(Request $request) : JsonResponse
     {
-        return $request->user();
+        return response()->json($request->user());
     }
 
-    public function list(Request $request)
+    public function list(Request $request, UserService $userService) : JsonResponse
     {
         $request->validate([
             'search' => 'nullable|string|max:255',
             'perPage' => 'nullable|integer|min:1|max:100',
         ]);
-        
-        $query = User::query();
 
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('email', 'like', "%{$request->search}%")
-                  ->orWhere('name', 'like', "%{$request->search}%");
-            });
-        }
+        $paginatedUsers = $userService->getPaginatedUsers(
+            $request->input('perPage'),
+            $request->input('search')
+        );
 
-        return $query->paginate($request->perPage ?? 20);
+        return response()->json($paginatedUsers);
     }
 
-    public function updateOrCreate(Request $request)
+    public function updateOrCreate(Request $request, UserService $userService) : JsonResponse
     {
         try {
-                $data = $request->validate([
+                $request->validate([
                 'id' => 'sometimes|exists:users,id',
                 'name' => 'required|string|max:255',
                 'email' => "required|email|max:255|unique:users,email,{$request->id}",
@@ -42,19 +40,14 @@ class UserController extends Controller
                 'accesses' => 'nullable|array',
             ]);
 
-            $insert = [
-                'name' => $data['name'],
-                'email' => $data['email'],
-            ];
-            if (!empty($data['password'])) {
-                $insert['password'] = bcrypt($data['password']);
-            }
-
-            $user = User::updateOrCreate(
-                ['id' => $data['id'] ?? null],
-                $insert
+            $user = $userService->updateOrCreate(
+                $request->input('name'),
+                $request->input('email'),
+                $request->input('password'),
+                $request->input('accesses', []),
+                $request->input('id', null)
             );
-            $user->accesses()->sync($data['accesses'] ?? []);
+            
             return response()->json(['message' => $user->first_name . ($user->wasRecentlyCreated ? ' blev oprettet som bruger' : ' blev opdateret')], 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
@@ -63,39 +56,63 @@ class UserController extends Controller
         }
     }
 
-    public function bulkUpdate(Request $request){
+    public function bulkUpdate(Request $request, UserService $userService) : JsonResponse
+    {
         try {
-            $users = User::findOrFail($request->userIds);
+            $request->validate([
+                'userIds' => 'required|array',
+                'userIds.*' => 'exists:users,id',
+                'accesses' => 'nullable|array',
+            ]);
 
-            foreach($users as $user){
-                $user->accesses()->sync($request->accesses);
-                $user->save();
-            }
+            $userService->bulkUpdate($request->input('userIds'), $request->input('accesses'));
+
             return response()->json(['message' => 'Brugerene blev opdateret'], 200);
         } catch (\Throwable $th) {
             return response()->json(['message' => "Der skete en kritisk fejl under opdatering af brugere"], 500);
         }
     }
 
-    public function bulkDelete(Request $request)
+    public function bulkDelete(Request $request, UserService $userService) : JsonResponse
     {
         try {
-            $userIds = $request->userIds;
-            User::whereIn('id', $userIds)->delete();
+            $request->validate([
+                'userIds' => 'required|array',
+                'userIds.*' => 'exists:users,id',
+            ]);
+
+            $userService->bulkDelete($request->input('userIds'));
+            
             return response()->json(['message' => 'Brugere slettet'], 200);
         } catch (\Throwable $th) {
             return response()->json(['message' => "Der skete en kritisk fejl under sletning af brugere"], 500);
         }
     }
 
-    public function delete($id)
+    public function delete(int $id, UserService $userService) : JsonResponse
     {
         try {
-            $user = User::findOrFail($id);
-            $user->delete();
+            $userService->delete($id);
+
             return response()->json(['message' => 'Bruger slettet'], 200);
         } catch (\Throwable $th) {
             return response()->json(['message' => "Der skete en kritisk fejl under sletning af bruger"], 500);
         }
+    }
+
+    public function activities(int $id, Request $request, ActivityService $activityService) : JsonResponse
+    {
+        $filters = $request->validate([
+            'type' => 'nullable|string',
+            'subject' => 'nullable|string',
+            'search' => 'nullable|string|max:255',
+            'from' => 'nullable|date',
+            'to' => 'nullable|date',
+            'perPage' => 'nullable|integer',
+        ]);
+
+        $activities = $activityService->getUserActivities($id, $filters);
+
+        return response()->json($activities);
     }
 }
