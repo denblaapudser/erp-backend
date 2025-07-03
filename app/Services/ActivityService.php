@@ -8,7 +8,12 @@ use Illuminate\Support\Collection;
 
 class ActivityService
 {
-        public function getUserActivities(int $userId, array $filters = []) : Collection|LengthAwarePaginator
+    public function getAll() : Collection
+    {
+        return Activity::with('user')->latest()->get();
+    }
+
+    public function getUserActivities(int $userId, array $filters = []) : Collection|LengthAwarePaginator
     {
         if(!empty($filters)){
             $filters = (object)$filters;

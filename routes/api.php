@@ -1,12 +1,11 @@
 <?php
 
 use App\Http\Controllers\AccessController;
+use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\UserController;
-use App\Models\User;
-use App\Services\ActivityService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 
@@ -31,8 +30,13 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::get('user/accesses', [AccessController::class, 'list']);
     
-    Route::get('/activities/available-filters', fn(ActivityService $activityService, Request $req) => $activityService->getAvailableActivityFilters($req->input('context')))->where('id', '[0-9]+');
+    Route::get('/activities', [ActivityController::class, 'activities']);
+    Route::get('/activities/available-filters', [ActivityController::class, 'getAvailableActivityFilters']);
     
     // Ensure the show method exists in ImageController and the route is defined
     Route::resource('images', ImageController::class)->only(['show', 'store', 'destroy']);
+
+    Route::get('/statistics/warnings', [StatisticsController::class, 'warnings']);
+    Route::get('/statistics/total-products', [StatisticsController::class, 'totalProducts']);
+    Route::get('/statistics/total-users', [StatisticsController::class, 'totalUsers']);
 });
