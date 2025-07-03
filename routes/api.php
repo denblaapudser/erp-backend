@@ -27,10 +27,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('inventory/products/{id}/', [InventoryController::class, 'deleteProduct'])->where('id', '[0-9]+');
     Route::put('inventory/products/bulk', [InventoryController::class, 'bulkUpdateProducts']);
     Route::delete('inventory/products/bulk', [InventoryController::class, 'bulkDeleteProducts']);
+    Route::get('inventory/products/{id}/activities', [InventoryController::class, 'activities'])->where('id', '[0-9]+');
     
     Route::get('user/accesses', [AccessController::class, 'list']);
     
-    Route::get('/activities/available-filters', fn(ActivityService $activityService) => $activityService->getAvailableActivityFilters())->where('id', '[0-9]+');
+    Route::get('/activities/available-filters', fn(ActivityService $activityService, Request $req) => $activityService->getAvailableActivityFilters($req->input('context')))->where('id', '[0-9]+');
     
     // Ensure the show method exists in ImageController and the route is defined
     Route::resource('images', ImageController::class)->only(['show', 'store', 'destroy']);

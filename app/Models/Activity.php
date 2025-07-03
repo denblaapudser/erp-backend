@@ -55,7 +55,6 @@ class Activity extends Model
     {
         $query
             ->when($filters->type, fn($query) => $query->whereIn('activity_type', $filters->type))
-            ->when($filters->subject ?? null, fn($query) => $query->whereIn('subject_type', $filters->subject))
             ->when(
                 ($filters->from ?? null) && ($filters->to ?? null),
                 fn($query) => $query->whereDate('created_at', '>=', $filters->from)
@@ -76,5 +75,16 @@ class Activity extends Model
             InventoryProducts::class => 'Produkt',
             default => 'Andet',
         };
+    }
+
+    public function scopeByContext($query, string $context): void
+    {
+        if($context === 'user') {
+            $query->where('subject_type', User::class);
+        } elseif ($context === 'product') {
+            $query->where('subject_type', InventoryProducts::class);
+        } else {
+            $query->whereNotIn('subject_type', [User::class, InventoryProducts::class]);
+        }
     }
 }

@@ -30,7 +30,7 @@ class ActivityService
         return $activities;
     }
 
-    public function getProductActivities(int $productId, array $filters = []) : Collection|LengthAwarePaginator
+    public function getProductActivities(int $productId, object $filters = null) : Collection|LengthAwarePaginator
     {
         if(!empty($filters)){
             $filters = (object)$filters;
@@ -41,7 +41,7 @@ class ActivityService
             $filters->to ??= null;
         }
 
-        $query = Activity::forProduct($productId)
+        $query = Activity::with('user')->forProduct($productId)
             ->when($filters, fn($query, $filters) => $query->applyFilters($filters))
             ->latest();
 
@@ -52,16 +52,23 @@ class ActivityService
         return $activities;
     }
 
-    public function getAvailableActivityFilters() : Collection
+    public function getAvailableActivityFilters($context = null) : Collection
     {
-        $availableFilters = Activity::select('activity_type', 'subject_type')
-            ->distinct()
-            ->get()
-            ->map(fn($item) => [
-                'type' => $item->activity_type,
-                'subject_type' => $item->subject_type,
+        $filters = Activity::when($context, fn($q) => $q->byContext($context))
+            ->with('user')
+            ->get();
+
+        $test = collect([
+            'availableTypes' => $filters->pluck('activity_type')->unique()->filter()->values(),
+            'availableSubjects' => $filters->map(fn($item) => [
+                'type' => $item->subject_type,
                 'label' => $item->subject_label,
-            ]);
-        return $availableFilters;
+            ])->unique(fn($item) => $item['type'].'-'.$item['label'])->values(),
+                'responsibleUsers' => $filters->pluck('user')->filter()->unique('id')->map(fn($user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+            ])->values(),
+        ]);
+        return $test;
     }
 }

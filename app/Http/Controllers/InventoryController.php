@@ -114,14 +114,14 @@ class InventoryController extends Controller
 
     public function activities(int $id, Request $request, ActivityService $activityService)
     {
-        $data = (object)$request->validate([
-            'filter' => 'nullable|array',
-            'filter.type' => 'nullable|string',
-            'filter.from' => 'nullable|date',
-            'filter.to' => 'nullable|date',
-            'filter.search' => 'nullable|string|max:255',
+        $filters = (object) $request->validate([
+            'type' => 'nullable|string',
+            'search' => 'nullable|string|max:255',
+            'from' => 'nullable|date',
+            'to' => 'nullable|date',
+            'perPage' => 'nullable|integer',
         ]);
-        $activities = $activityService->getProductActivities($id, $data->filter ?? []);
+        $activities = $activityService->getProductActivities($id, $filters);
 
         return response()->json($activities);
     }

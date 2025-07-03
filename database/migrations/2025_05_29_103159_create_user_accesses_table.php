@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('user_accesses', function (Blueprint $table) {
             $table->id();
             $table->string('label')->unique();
+            $table->string('type')->unique();
             $table->string('description')->nullable();
             $table->string('icon')->nullable();
             $table->timestamps();

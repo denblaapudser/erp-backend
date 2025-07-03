@@ -14,16 +14,25 @@ class UserAccesses extends Seeder
     public function run(): void
     {
         UserAccess::firstOrCreate(
-            ['label' => 'Admin adgang'],
-            ['description' => 'Giver brugeren mulighed for at kunne logge ind i administrationssystemet.']
+            ['type' => 'adminAccess'],
+            [
+                'label' => 'Admin adgang', 
+                'description' => 'Giver brugeren mulighed for at kunne logge ind i administrationssystemet.'
+            ],
         );
         UserAccess::firstOrCreate(
-            ['label' => 'Redigér brugere'],
-            ['description' => 'Giver brugeren mulighed for at redigere andre brugere.']
+            ['type' => 'editUsers'],
+            [
+                'label' => 'Redigér brugere',
+                'description' => 'Giver brugeren mulighed for at redigere andre brugere.'
+            ]
         );
         UserAccess::firstOrCreate(
-            ['label' => 'Redigér lager'],
-            ['description' => 'Giver brugeren mulighed for at redigere lageret.']
+            ['type' => 'editInventory'],
+            [
+                'label' => 'Redigér lager',
+                'description' => 'Giver brugeren mulighed for at redigere lageret.'
+            ]
         );
     }
 }
