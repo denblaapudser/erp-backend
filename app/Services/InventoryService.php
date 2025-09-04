@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\DTO\Inventory\BaseFiltersDTO;
+use App\DTO\Shared\BaseFiltersDTO;
 use App\DTO\Inventory\BulkDeleteProductsDTO;
 use App\DTO\Inventory\BulkUpdateProductsDTO;
 use App\DTO\Inventory\GetPaginatedProductsDTO;

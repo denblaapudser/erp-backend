@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Http\Requests\Inventory;
+namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ListProductsRequest extends FormRequest
+class BulkUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        return false;
     }
 
     /**
@@ -22,8 +22,10 @@ class ListProductsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'search' => 'nullable|string|max:255',
-            'perPage' => 'nullable|integer|min:1|max:100',
+            'userIds' => 'required|array',
+            'userIds.*' => 'exists:users,id',
+            'accesses' => 'nullable|array',
+            'accesses.*' => 'string',
         ];
     }
 }

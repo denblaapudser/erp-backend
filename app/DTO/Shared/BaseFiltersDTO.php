@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DTO\Inventory;
+namespace App\DTO\Shared;
 
 use Spatie\LaravelData\Data;
 

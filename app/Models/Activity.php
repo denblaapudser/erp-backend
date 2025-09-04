@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\DTO\Inventory\ActivityFiltersDTO;
+use App\DTO\Shared\ActivityFiltersDTO;
 use App\Enums\ActivityEvents;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

@@ -1,6 +1,8 @@
 <?php 
 
-namespace App\DTO\Inventory;
+namespace App\DTO\Shared;
+
+use App\DTO\Shared\BaseFiltersDTO;
 
 class ActivityFiltersDTO extends BaseFiltersDTO
 {

@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Http\Requests\Inventory;
+namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ActivitiesRequest extends FormRequest
+class BulkDeleteRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        return false;
     }
 
     /**
@@ -22,11 +22,8 @@ class ActivitiesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type' => 'nullable|string',
-            'search' => 'nullable|string|max:255',
-            'from' => 'nullable|date',
-            'to' => 'nullable|date',
-            'perPage' => 'nullable|integer',
+            'userIds' => 'required|array',
+            'userIds.*' => 'exists:users,id',
         ];
     }
 }

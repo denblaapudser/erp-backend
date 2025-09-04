@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\DTO\Inventory\ActivityFiltersDTO;
+use App\DTO\Shared\ActivityFiltersDTO;
 use App\Models\Activity;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -14,17 +14,8 @@ class ActivityService
         return Activity::with('user')->latest()->get();
     }
 
-    public function getUserActivities(int $userId, array $filters = []) : Collection|LengthAwarePaginator
+    public function getUserActivities(int $userId, ActivityFiltersDTO $filters = null) : Collection|LengthAwarePaginator
     {
-        if(!empty($filters)){
-            $filters = (object)$filters;
-            $filters->type = !empty($filters->type) ? collect(explode(',', $filters->type)) : [null];
-            $filters->subject = !empty($filters->subject) ? collect(explode(',', $filters->subject)) : [null];
-            $filters->search ??= null;
-            $filters->from ??= null;
-            $filters->to ??= null;
-        }
-
         $query = Activity::forUser($userId)
             ->when($filters, fn($query, $filters) => $query->applyFilters($filters))
             ->latest();

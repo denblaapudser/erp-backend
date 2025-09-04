@@ -2,25 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\DTO\Inventory\ActivityFiltersDTO;
-use App\DTO\Inventory\BaseFiltersDTO;
+
+use App\DTO\Shared\BaseFiltersDTO;
 use App\DTO\Inventory\BulkDeleteProductsDTO;
 use App\DTO\Inventory\BulkUpdateProductsDTO;
 use App\DTO\Inventory\UpdateOrCreateProductDTO;
-use App\Http\Requests\Inventory\ActivitiesRequest;
+use App\DTO\Shared\ActivityFiltersDTO;
+use App\Http\Requests\Activity\ActivitiesRequest;
 use App\Http\Requests\Inventory\AddStockRequest;
 use App\Http\Requests\Inventory\BulkDeleteProductsRequest;
 use App\Http\Requests\Inventory\BulkUpdateProductsRequest;
-use App\Http\Requests\Inventory\ListProductsRequest;
 use App\Http\Requests\Inventory\TakeProductRequest;
 use App\Http\Requests\Inventory\TakeProductsRequest;
 use App\Http\Requests\Inventory\UpdateOrCreateProductRequest;
+use App\Http\Requests\Shared\BaseFilterRequest;
 use App\Services\InventoryService;
 use App\Services\ActivityService;
 
 class InventoryController extends Controller
 {
-    public function listProducts(ListProductsRequest $request, InventoryService $inventoryService)
+    public function listProducts(BaseFilterRequest $request, InventoryService $inventoryService)
     {
         $paginatedProducts = $inventoryService->getPaginatedProducts(
             BaseFiltersDTO::from($request->validated())

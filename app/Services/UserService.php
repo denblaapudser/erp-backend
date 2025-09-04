@@ -2,50 +2,51 @@
 
 namespace App\Services;
 
+use App\DTO\Shared\BaseFiltersDTO;
+use App\DTO\User\UpdateOrCreateDTO;
 use App\Events\User\BulkDeletedEvent;
 use App\Events\User\BulkUpdatedEvent;
 use App\Events\User\CreatedEvent;
 use App\Events\User\DeletedEvent;
 use App\Events\User\UpdatedEvent;
 use App\Models\User;
-use Exception;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class UserService
 {
-    public function getPaginatedUsers($perPage = 20, $search = null) : LengthAwarePaginator
+    public function getPaginatedUsers(BaseFiltersDTO $filters) : LengthAwarePaginator
     {
         $query = User::query();
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('email', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%")
-                  ->orWhere('username', 'like', "%{$search}%");
+        if ($filters->search) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('email', 'like', "%{$filters->search}%")
+                  ->orWhere('name', 'like', "%{$filters->search}%")
+                  ->orWhere('username', 'like', "%{$filters->search}%");
             });
         }
 
-        return $query->paginate($perPage);
+        return $query->paginate($filters->perPage);
     }
 
 
-    public function updateOrCreate($name, $username, $email = null, $password = null, $pin = null, $accesses = [], $id = null) : User
+    public function updateOrCreate(UpdateOrCreateDTO $dto) : User
     {
         $user = User::updateOrCreate(
             [
-                'id' => $id,
+                'id' => $dto->id,
             ],
             [
-                'name' => $name,
-                'username' => $username,
-                'email' => $email,
-                'pin' => $pin,
-                'password' => $password,
+                'name' => $dto->name,
+                'username' => $dto->username,
+                'email' => $dto->email,
+                'pin' => $dto->pin,
+                'password' => $dto->password,
             ]
         );
-        $user->accesses()->sync($accesses);
+        $user->accesses()->sync($dto->accesses);
 
         if ($user->wasRecentlyCreated) {
             CreatedEvent::dispatch($user);
