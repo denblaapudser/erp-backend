@@ -8,7 +8,10 @@ use App\Events\User\CreatedEvent;
 use App\Events\User\DeletedEvent;
 use App\Events\User\UpdatedEvent;
 use App\Models\User;
+use Exception;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class UserService
 {
@@ -19,7 +22,8 @@ class UserService
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('email', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%");
+                  ->orWhere('name', 'like', "%{$search}%")
+                  ->orWhere('username', 'like', "%{$search}%");
             });
         }
 
@@ -27,20 +31,19 @@ class UserService
     }
 
 
-    public function updateOrCreate($name, $email, $password = null, $accesses = [], $id = null) : User
+    public function updateOrCreate($name, $username, $email = null, $password = null, $pin = null, $accesses = [], $id = null) : User
     {
-        $insert = [
-            'name' => $name,
-            'email' => $email,
-        ];
-        
-        if (!empty($password)) {
-            $insert['password'] = bcrypt($password);
-        }
-
         $user = User::updateOrCreate(
-            ['id' => $id],
-            $insert
+            [
+                'id' => $id,
+            ],
+            [
+                'name' => $name,
+                'username' => $username,
+                'email' => $email,
+                'pin' => $pin,
+                'password' => $password,
+            ]
         );
         $user->accesses()->sync($accesses);
 
@@ -79,5 +82,35 @@ class UserService
         $user = User::findOrFail($id);
         $user->delete();
         DeletedEvent::dispatch($user);
+    }
+
+    public function authenticateAsAdmin(string $username, ?string $password) : User
+    {
+        $user = User::where('username', $username)->orWhere('email', $username)->first();
+
+        if(!$user) {
+            throw ValidationException::withMessages(['Creds' => 'Forkert email, brugernavn eller adgangskode for administrator.']);
+        }
+
+        if(!$user || ! Hash::check($password, (string)$user->password)) {
+            throw ValidationException::withMessages(['Creds' => 'Forkert email, brugernavn eller adgangskode for administrator.']);
+        }
+
+        if(!$user->hasAccess('adminAccess')) {
+            throw ValidationException::withMessages(['no_admin_access' => 'Du har forsøget at logge ind som administrator men du har ikke administrator adgang.']);
+        } 
+
+        return $user;
+    }
+
+    public function authenticateAsEmployee(string $pin) : User
+    {
+        $user = User::where('pin', $pin)->first();
+
+        if(!$user) {
+            throw ValidationException::withMessages(['wrong_pin' => 'Forkert PIN for medarbejder.']);
+        }
+
+        return $user;
     }
 }

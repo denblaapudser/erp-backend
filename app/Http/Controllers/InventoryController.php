@@ -2,52 +2,45 @@
 
 namespace App\Http\Controllers;
 
+use App\DTO\Inventory\ActivityFiltersDTO;
+use App\DTO\Inventory\BaseFiltersDTO;
+use App\DTO\Inventory\BulkDeleteProductsDTO;
+use App\DTO\Inventory\BulkUpdateProductsDTO;
+use App\DTO\Inventory\UpdateOrCreateProductDTO;
+use App\Http\Requests\Inventory\ActivitiesRequest;
+use App\Http\Requests\Inventory\AddStockRequest;
+use App\Http\Requests\Inventory\BulkDeleteProductsRequest;
+use App\Http\Requests\Inventory\BulkUpdateProductsRequest;
+use App\Http\Requests\Inventory\ListProductsRequest;
+use App\Http\Requests\Inventory\TakeProductRequest;
+use App\Http\Requests\Inventory\TakeProductsRequest;
+use App\Http\Requests\Inventory\UpdateOrCreateProductRequest;
 use App\Services\InventoryService;
 use App\Services\ActivityService;
-use Illuminate\Http\Request;
 
 class InventoryController extends Controller
 {
-    public function listProducts(Request $request, InventoryService $inventoryService)
+    public function listProducts(ListProductsRequest $request, InventoryService $inventoryService)
     {
-        $request->validate([
-            'search' => 'nullable|string|max:255',
-            'perPage' => 'nullable|integer|min:1|max:100',
-        ]);
-
         $paginatedProducts = $inventoryService->getPaginatedProducts(
-            $request->input('search'),
-            $request->input('perPage', 20)
+            BaseFiltersDTO::from($request->validated())
         );
-
         return response()->json($paginatedProducts);
     }
 
-    public function updateOrCreateProduct(Request $request, InventoryService $inventoryService)
+
+
+
+    public function updateOrCreateProduct(UpdateOrCreateProductRequest $request, InventoryService $inventoryService)
     {
-        $request->validate([
-            'id' => 'sometimes|exists:inventory_products,id',
-            'imageId' => 'nullable|exists:images,id',
-            'name' => 'required|string|max:255',
-            'quantity' => 'required|integer|min:0',
-            'shouldAlert' => 'required|boolean',
-            'alertThreshold' => 'required|integer|min:0',
-            'note' => 'nullable|string|max:1000',
-        ]);
-
         $product = $inventoryService->updateOrCreateProduct(
-            $request->input('id'),
-            $request->input('name'),
-            $request->input('quantity'),
-            $request->input('shouldAlert'),
-            $request->input('alertThreshold'),
-            $request->input('note', null),
-            $request->input('restockUrl', null),
-            $request->input('imageId', null)
+            UpdateOrCreateProductDTO::from($request->validated())
         );
-
         return response()->json(['message' => "Produkt {$product->name} " . ($product->wasRecentlyCreated ? 'oprettet' : 'opdateret')], 200);
     }
+
+
+
 
     public function deleteProduct(int $id, InventoryService $inventoryService)
     {
@@ -55,74 +48,73 @@ class InventoryController extends Controller
         return response()->json(['message' => "Produkt {$deletedProduct->name} slettet"], 200);
     }
 
-    public function bulkDeleteProducts(Request $request, InventoryService $inventoryService)
-    {
-        $data = $request->validate([
-            'ids.*' => 'exists:inventory_products,id',
-        ]);
-        $deletedCount = $inventoryService->bulkDeleteProducts($data['ids']);
 
+
+
+    public function bulkDeleteProducts(BulkDeleteProductsRequest $request, InventoryService $inventoryService)
+    {
+        $deletedCount = $inventoryService->bulkDeleteProducts(
+            BulkDeleteProductsDTO::from($request->validated())
+        );
         return response()->json(['message' => "{$deletedCount} produkter blev slettet"], 200);
     }
 
-    public function bulkUpdateProducts(Request $request, InventoryService $inventoryService)
-    {
-        $data = (object) $request->validate([
-            'productIds' => 'required|array',
-            'productIds.*' => 'exists:inventory_products,id',
-            'quantity' => 'nullable|integer|min:0',
-            'alertThreshold' => 'nullable|integer|min:0',
-            'shouldAlert' => 'nullable|string',
-        ]);
 
+
+
+    public function bulkUpdateProducts(BulkUpdateProductsRequest $request, InventoryService $inventoryService)
+    {
         $inventoryService->bulkUpdateProducts(
-            $data->productIds,
-            $data->quantity ?? 0,
-            $data->alertThreshold ?? 0,
-            $data->shouldAlert ?? null
+            BulkUpdateProductsDTO::from($request->validated())
         );
-    
         return response()->json(['message' => 'Produkter opdateret'], 200);
     }
 
-    public function addStock(Request $request, int $id, InventoryService $inventoryService)
-    {
-        $data = $request->validate([
-            'quantity' => 'required|integer|min:1',
-        ]);
-        $product = $inventoryService->addStock($id, $data['quantity']);
 
+
+
+    public function addStock(AddStockRequest $request, int $id, InventoryService $inventoryService)
+    {
+        $product = $inventoryService->addStock($id, $request->quantity);
         return response()->json(['message' => "Produkt {$product->name} tilføjet"], 200);
     }
 
-    public function takeProduct(Request $request, int $id, InventoryService $inventoryService)
+
+
+
+    public function takeProduct(TakeProductRequest $request, int $id, InventoryService $inventoryService)
     {
         try {
-            $data = $request->validate([
-                'quantity' => 'required|integer|min:1',
-            ]);
-            $product = $inventoryService->takeProduct($id, $data['quantity']);
-
+            $product = $inventoryService->takeProduct($id, $request->quantity);
             return response()->json(['message' => "Produkt {$product->name} taget"], 200);
         } catch (\App\Exceptions\StockTooLowException $e) {
             return response()->json(['message' => $e->getMessage()], $e->getCode() ?: 422);
         } catch (\Throwable $th) {
             return response()->json(['message' => 'Der skete en kritisk fejl under at tage produkt'], 500);
         }
-       
     }
 
-    public function activities(int $id, Request $request, ActivityService $activityService)
-    {
-        $filters = (object) $request->validate([
-            'type' => 'nullable|string',
-            'search' => 'nullable|string|max:255',
-            'from' => 'nullable|date',
-            'to' => 'nullable|date',
-            'perPage' => 'nullable|integer',
-        ]);
-        $activities = $activityService->getProductActivities($id, $filters);
 
+
+
+    public function takeProducts(TakeProductsRequest $request, InventoryService $inventoryService)
+    {
+        try {
+            $inventoryService->takeProducts($request->products);
+            return response()->json(['message' => count($request->products) . " produkter taget"], 200);
+        } catch (\App\Exceptions\StockTooLowException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getCode() ?: 422);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Der skete en kritisk fejl under at tage produkter'], 500);
+        }
+    }
+
+
+
+
+    public function activities(int $id, ActivitiesRequest $request, ActivityService $activityService)
+    {
+        $activities = $activityService->getProductActivities($id, ActivityFiltersDTO::from($request->validated()));
         return response()->json($activities);
     }
 }

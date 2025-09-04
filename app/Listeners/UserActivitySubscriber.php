@@ -201,7 +201,7 @@ class UserActivitySubscriber
             'activity_label' => "Oprettet bruger {$event->user->name}",
             'activity_data' => (object) [
                 'user_id' => $event->user->id,
-                'email' => $event->user->email,
+                'username' => $event->user->username,
             ],
             'subject_id' => $event->user->id,
             'subject_type' => User::class,
@@ -216,7 +216,7 @@ class UserActivitySubscriber
             'activity_label' => "Slettet bruger {$event->user->name}",
             'activity_data' => (object) [
                 'user_id' => $event->user->id,
-                'email' => $event->user->email,
+                'username' => $event->user->username,
             ],
             'subject_id' => $event->user->id,
             'subject_type' => User::class,
@@ -231,7 +231,7 @@ class UserActivitySubscriber
             'activity_label' => "Opdateret bruger {$event->user->name}",
             'activity_data' => (object) [
                 'user_id' => $event->user->id,
-                'email' => $event->user->email,
+                'username' => $event->user->username,
             ],
             'subject_id' => $event->user->id,
             'subject_type' => User::class,
@@ -247,7 +247,7 @@ class UserActivitySubscriber
                 'activity_label' => "Slettet bruger {$user->name}",
                 'activity_data' => (object) [
                     'user_id' => $user->id,
-                    'email' => $user->email,
+                    'username' => $user->username,
                 ],
                 'subject_id' => $user->id,
                 'subject_type' => User::class,
@@ -265,7 +265,7 @@ class UserActivitySubscriber
                 'activity_label' => "Opdateret bruger {$user->name}",
                 'activity_data' => (object) [
                     'user_id' => $user->id,
-                    'email' => $user->email,
+                    'username' => $user->username,
                 ],
                 'subject_id' => $user->id,
                 'subject_type' => User::class,

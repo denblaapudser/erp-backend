@@ -2,6 +2,11 @@
 
 namespace App\Services;
 
+use App\DTO\Inventory\BaseFiltersDTO;
+use App\DTO\Inventory\BulkDeleteProductsDTO;
+use App\DTO\Inventory\BulkUpdateProductsDTO;
+use App\DTO\Inventory\GetPaginatedProductsDTO;
+use App\DTO\Inventory\UpdateOrCreateProductDTO;
 use App\Events\Product\AddedStockEvent;
 use App\Events\Product\BulkDeletedEvent;
 use App\Events\Product\BulkUpdatedEvent;
@@ -11,40 +16,32 @@ use App\Events\Product\TookProductEvent;
 use App\Events\Product\UpdatedEvent;
 use App\Exceptions\StockTooLowException;
 use App\Models\InventoryProducts;
+use DB;
 
 class InventoryService
 {
-    public function getPaginatedProducts(string $search = null, int $perPage = 20)
+    public function getPaginatedProducts(BaseFiltersDTO $dto)
     {
         $query = InventoryProducts::query();
 
-        if (!empty($search)) {
-            $query->where('name', 'like', "%{$search}%");
+        if (!empty($dto->search)) {
+            $query->where('name', 'like', "%{$dto->search}%");
         }
 
-        return $query->paginate($perPage);
+        return $query->paginate($dto->perPage);
     }
 
-    public function updateOrCreateProduct(
-        ?int $id,
-        string $name,
-        int $quantity,
-        bool $shouldAlert,
-        int $alertThreshold,
-        ?string $note = null,
-        ?string $restockUrl = null,
-        ?int $imageId = null
-    ) {
+    public function updateOrCreateProduct(UpdateOrCreateProductDTO $dto) {
         $product = InventoryProducts::updateOrCreate(
-            ['id' => $id],
+            ['id' => $dto->id],
             [
-                'name' => $name,
-                'qty' => $quantity,
-                'should_alert' => $shouldAlert,
-                'alert_threshold' => $alertThreshold,
-                'note' => $note,
-                'restock_url' => $restockUrl,
-                'image_id' => $imageId,
+                'name' => $dto->name,
+                'qty' => $dto->quantity,
+                'should_alert' => $dto->shouldAlert,
+                'alert_threshold' => $dto->alertThreshold,
+                'note' => $dto->note,
+                'restock_url' => $dto->restockUrl,
+                'image_id' => $dto->imageId,
             ]
         );
 
@@ -67,9 +64,9 @@ class InventoryService
         return $product;
     }
 
-    public function bulkDeleteProducts(array $ids)
+    public function bulkDeleteProducts(BulkDeleteProductsDTO $dto)
     {
-        $productsToDelete = InventoryProducts::find($ids);
+        $productsToDelete = InventoryProducts::find($dto->ids);
         $productsToDelete->each(fn ($product) => $product->delete());
         $deletedCount = $productsToDelete->count();
 
@@ -78,28 +75,23 @@ class InventoryService
         return $deletedCount;
     }
 
-    public function bulkUpdateProducts(
-        array $productIds,
-        ?int $quantity = null,
-        ?int $alertThreshold = null,
-        $shouldAlert = null
-    ) {
-        $products = InventoryProducts::whereIn('id', $productIds)->get();
+    public function bulkUpdateProducts(BulkUpdateProductsDTO $dto) {
+        $products = InventoryProducts::whereIn('id', $dto->productIds)->get();
 
         foreach ($products as $product) {
-            if ($quantity !== null && $quantity > 0) {
-                $product->qty = $quantity;
+            if ($dto->quantity !== null && $dto->quantity > 0) {
+                $product->qty = $dto->quantity;
             }
-            if ($shouldAlert !== null && $shouldAlert !== '') {
-                $product->should_alert = $shouldAlert === '1' || $shouldAlert === 1 || $shouldAlert === true;
-                if ($product->should_alert && $alertThreshold !== null && $alertThreshold > 0) {
-                    $product->alert_threshold = $alertThreshold;
+            if ($dto->shouldAlert !== null && $dto->shouldAlert !== '') {
+                $product->should_alert = $dto->shouldAlert === '1' || $dto->shouldAlert === 1 || $dto->shouldAlert === true;
+                if ($product->should_alert && $dto->alertThreshold !== null && $dto->alertThreshold > 0) {
+                    $product->alert_threshold = $dto->alertThreshold;
                 }
             }
             $product->save();
         }
 
-        BulkUpdatedEvent::dispatch($products, $quantity ?? 0, $alertThreshold ?? 0, $shouldAlert ?? null);
+        BulkUpdatedEvent::dispatch($products, $dto->quantity ?? 0, $dto->alertThreshold ?? 0, $dto->shouldAlert ?? null);
 
         return $products;
     }
@@ -128,5 +120,19 @@ class InventoryService
         TookProductEvent::dispatch($product, $quantity);
 
         return $product;
+    }
+
+    public function takeProducts(array $products)
+    {
+        DB::beginTransaction();
+        try {
+            foreach ($products as $product) {
+                $this->takeProduct($product['id'], $product['quantity']);
+            }
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            throw $th;
+        }
     }
 }

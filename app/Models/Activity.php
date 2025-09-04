@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\DTO\Inventory\ActivityFiltersDTO;
 use App\Enums\ActivityEvents;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -51,7 +52,7 @@ class Activity extends Model
             ->where('subject_id', $productID);
     }
     
-    public function scopeApplyFilters($query, object $filters): void
+    public function scopeApplyFilters($query, ActivityFiltersDTO $filters): void
     {
         $query
             ->when($filters->type, fn($query) => $query->whereIn('activity_type', $filters->type))

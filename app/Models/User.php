@@ -32,6 +32,8 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'username',
+        'pin',
         'password',
     ];
 
@@ -112,4 +114,18 @@ class User extends Authenticatable
     {
         return $this->hasMany(Activity::class);
     }
+
+    public function hasAccess(string $access): bool
+    {
+        return $this->accesses()->where('type', $access)->exists();
+    }
+
+    // protected static function boot()
+    // {
+    //     static::saving(function ($user) {
+    //         if (isset($user->email) && $user->email === '') {
+    //             $user->email = null;
+    //         }
+    //     });
+    // }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\DTO\Inventory\ActivityFiltersDTO;
 use App\Models\Activity;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -35,17 +36,8 @@ class ActivityService
         return $activities;
     }
 
-    public function getProductActivities(int $productId, object $filters = null) : Collection|LengthAwarePaginator
+    public function getProductActivities(int $productId, ActivityFiltersDTO $filters = null) : Collection|LengthAwarePaginator
     {
-        if(!empty($filters)){
-            $filters = (object)$filters;
-            $filters->type = !empty($filters->type) ? collect(explode(',', $filters->type)) : [null];
-            $filters->subject = !empty($filters->subject) ? collect(explode(',', $filters->subject)) : [null];
-            $filters->search ??= null;
-            $filters->from ??= null;
-            $filters->to ??= null;
-        }
-
         $query = Activity::with('user')->forProduct($productId)
             ->when($filters, fn($query, $filters) => $query->applyFilters($filters))
             ->latest();

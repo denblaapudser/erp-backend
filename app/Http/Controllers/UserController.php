@@ -35,10 +35,16 @@ class UserController extends Controller
                 $request->validate([
                 'id' => 'sometimes|exists:users,id',
                 'name' => 'required|string|max:255',
-                'email' => "required|email|max:255|unique:users,email,{$request->id}",
+                'email' => "nullable|email|max:255|unique:users,email,{$request->id}",
                 'password' => 'nullable|string|min:8',
                 'accesses' => 'nullable|array',
+                'pin' => 'nullable|string|max:4',
+                'username' => "nullable|string|max:255|unique:users,username,{$request->id}",
             ]);
+
+            if ($request->has('pin') && !is_numeric($request->input('pin'))) {
+                return response()->json(['message' => 'PIN skal være et tala'], 422);
+            }
 
             $user = $userService->updateOrCreate(
                 $request->input('name'),

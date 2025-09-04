@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('user_accesses', function (Blueprint $table) {
             $table->id();
+            $table->integer('child_of')->nullable(); // This field is optional and can be used to create a hierarchy of user accesses
             $table->string('label')->unique();
             $table->string('type')->unique();
             $table->string('description')->nullable();

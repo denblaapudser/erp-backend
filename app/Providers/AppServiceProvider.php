@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Http\Requests\LoginRequest as CustomLoginRequest;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Fortify\Http\Requests\LoginRequest as FortifyLoginRequest;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +21,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $this->app->bind(FortifyLoginRequest::class, CustomLoginRequest::class);
     }
 }
