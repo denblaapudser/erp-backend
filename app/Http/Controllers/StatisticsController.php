@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class StatisticsController extends Controller
 {
-    public function warnings(Request $request)
+    public function warnings()
     {
         $productsWithLowStock = InventoryProducts::where(function ($query) {
             $query->where(function ($q) {

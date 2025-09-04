@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Image;
-use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -16,7 +15,6 @@ class ImageController extends Controller
     public function store(Request $request)
     {
         try {
-            $all =  $request->all();
             $request->validate(['image' => 'required|image|max:51200']); // 50MB max size
             
             $image = $request->file('image');
