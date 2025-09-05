@@ -22,6 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('inventory/products', [InventoryController::class, 'listProducts']);
     Route::post('inventory/products', [InventoryController::class, 'updateOrCreateProduct']);
     Route::post('inventory/products/{id}/take', [InventoryController::class, 'takeProduct'])->where('id', '[0-9]+');
+    Route::post('inventory/products/take-multiple', [InventoryController::class, 'takeProducts']);
     Route::post('inventory/products/{id}/add-stock', [InventoryController::class, 'addStock'])->where('id', '[0-9]+');
     Route::delete('inventory/products/{id}/', [InventoryController::class, 'deleteProduct'])->where('id', '[0-9]+');
     Route::put('inventory/products/bulk', [InventoryController::class, 'bulkUpdateProducts']);

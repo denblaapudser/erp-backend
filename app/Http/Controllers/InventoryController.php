@@ -7,7 +7,7 @@ use App\DTO\Shared\BaseFiltersDTO;
 use App\DTO\Inventory\BulkDeleteProductsDTO;
 use App\DTO\Inventory\BulkUpdateProductsDTO;
 use App\DTO\Inventory\UpdateOrCreateProductDTO;
-use App\DTO\Shared\ActivityFiltersDTO;
+use App\DTO\Activity\ActivityFiltersDTO;
 use App\Http\Requests\Activity\ActivitiesRequest;
 use App\Http\Requests\Inventory\AddStockRequest;
 use App\Http\Requests\Inventory\BulkDeleteProductsRequest;

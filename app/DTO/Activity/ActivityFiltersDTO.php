@@ -1,25 +1,28 @@
-<?php 
+<?php
 
-namespace App\DTO\Shared;
+namespace App\DTO\Activity;
 
 use App\DTO\Shared\BaseFiltersDTO;
+use Illuminate\Support\Collection;
+use Spatie\LaravelData\Attributes\WithCast;
+use App\Utils\Casts\CommaSeparatedStringToCollectionCast;
+
 
 class ActivityFiltersDTO extends BaseFiltersDTO
 {
+    #[WithCast(CommaSeparatedStringToCollectionCast::class)]
+    public Collection $type;
+
+    #[WithCast(CommaSeparatedStringToCollectionCast::class)]
+    public Collection $subject;
+
     public function __construct(
-        public ?string $type,
-        public ?string $from,
-        public ?string $to,
-        public ?string $subject
+        public ?string $from = null,
+        public ?string $to = null,
     ) {
         parent::__construct(
             search: null,
             perPage: 20,
         );
-
-        $this->type = !empty($this->type) ? collect(explode(',', $this->type)) : [null];
-        $this->subject = !empty($this->subject) ? collect(explode(',', $this->subject)) : [null];
-        $this->from ??= null;
-        $this->to ??= null;
     }
 }

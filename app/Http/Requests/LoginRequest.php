@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Inventory;
+namespace App\Http\Requests;
 
 use App\Utils\Helpers;
 use Laravel\Fortify\Http\Requests\LoginRequest as FortifyLoginRequest;

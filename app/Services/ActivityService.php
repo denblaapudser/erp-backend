@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\DTO\Shared\ActivityFiltersDTO;
+use App\DTO\Activity\ActivityFiltersDTO;
 use App\Models\Activity;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;

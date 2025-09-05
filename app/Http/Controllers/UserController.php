@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\DTO\Shared\BaseFiltersDTO;
-use App\DTO\Shared\ActivityFiltersDTO;
+use App\DTO\Activity\ActivityFiltersDTO;
 use App\DTO\User\UpdateOrCreateDTO;
 use App\Http\Requests\Activity\ActivitiesRequest;
 use App\Http\Requests\Shared\BaseFilterRequest;
