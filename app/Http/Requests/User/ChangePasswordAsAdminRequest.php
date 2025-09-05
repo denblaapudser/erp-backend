@@ -2,17 +2,19 @@
 
 namespace App\Http\Requests\User;
 
+use App\Utils\Helpers;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
-class BulkDeleteRequest extends FormRequest
+class ChangePasswordAsAdminRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return Auth::user()?->hasAccess('editUsers');
+        $user = Auth::user();
+        return Helpers::isRequestFrom('adminApp') && $user->hasAccess('adminAccess') && $user->hasAccess('editUsers');
     }
 
     /**
@@ -23,8 +25,7 @@ class BulkDeleteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'userIds' => 'required|array',
-            'userIds.*' => 'exists:users,id',
+            'password' => 'required|string|min:8',
         ];
     }
 }

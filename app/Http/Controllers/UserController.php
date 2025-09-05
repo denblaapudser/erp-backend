@@ -9,6 +9,8 @@ use App\Http\Requests\Activity\ActivitiesRequest;
 use App\Http\Requests\Shared\BaseFilterRequest;
 use App\Http\Requests\User\BulkDeleteRequest;
 use App\Http\Requests\User\BulkUpdateRequest;
+use App\Http\Requests\User\ChangePasswordAsAdminRequest;
+use App\Http\Requests\User\ChangePinAsAdminRequest;
 use App\Http\Requests\User\UpdateOrCreateRequest;
 use App\Services\ActivityService;
 use App\Services\UserService;
@@ -20,6 +22,12 @@ class UserController extends Controller
     public function authenticatedUser(Request $request) : JsonResponse
     {
         return response()->json($request->user());
+    }
+
+    public function generateNonExistingPin(UserService $userService) : JsonResponse
+    {
+        $newPin = $userService->generateNonExistingPin();
+        return response()->json(['pin' => $newPin], 200);
     }
 
     public function list(BaseFilterRequest $request, UserService $userService) : JsonResponse
@@ -83,5 +91,26 @@ class UserController extends Controller
         $activities = $activityService->getUserActivities($id, ActivityFiltersDTO::from($request->validated()));
 
         return response()->json($activities);
+    }
+
+    public function adminUpdatePassword(int $id, ChangePasswordAsAdminRequest $request, UserService $userService) : JsonResponse
+    {
+        try {
+            $userService->adminUpdatePassword($id, $request->input('password'));
+            return response()->json(['message' => 'Brugerens password blev opdateret'], 200);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => "Der skete en kritisk fejl under opdatering af brugerens password"], 500);
+        }
+    }
+
+    public function adminUpdatePin(int $id, ChangePinAsAdminRequest $request, UserService $userService) : JsonResponse
+    {
+        try {
+            $request->validatePIN();
+            $userService->adminUpdatePin($id, $request->input('pin'));
+            return response()->json(['message' => 'Brugerens pin blev opdateret'], 200);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => "Der skete en kritisk fejl under opdatering af brugerens pin"], 500);
+        }
     }
 }

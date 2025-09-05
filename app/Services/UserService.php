@@ -10,12 +10,29 @@ use App\Events\User\CreatedEvent;
 use App\Events\User\DeletedEvent;
 use App\Events\User\UpdatedEvent;
 use App\Models\User;
+use Exception;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class UserService
 {
+    public function generateNonExistingPin() : string
+    {
+        $attempts = 0;
+        $maxAttempts = 10000; // 4-digit PINs
+
+        while ($attempts < $maxAttempts) {
+            $pin = str_pad((string)random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            if (!User::where('pin', $pin)->exists()) {
+                return $pin;
+            }
+            $attempts++;
+        }
+
+        throw new Exception("Kunne ikke generere en unik PIN efter {$maxAttempts} forsøg.");
+    }
+
     public function getPaginatedUsers(BaseFiltersDTO $filters) : LengthAwarePaginator
     {
         $query = User::query();
@@ -34,18 +51,21 @@ class UserService
 
     public function updateOrCreate(UpdateOrCreateDTO $dto) : User
     {
-        $user = User::updateOrCreate(
-            [
-                'id' => $dto->id,
-            ],
-            [
-                'name' => $dto->name,
-                'username' => $dto->username,
-                'email' => $dto->email,
-                'pin' => $dto->pin,
-                'password' => $dto->password,
-            ]
-        );
+        $data = [
+            'name' => $dto->name,
+            'username' => $dto->username,
+            'email' => $dto->email,
+        ];
+
+        if ($dto->pin !== null) {
+            $data['pin'] = $dto->pin;
+        }
+
+        if ($dto->password !== null) {
+            $data['password'] = $dto->password;
+        }
+
+        $user = User::updateOrCreate(['id' => $dto->id], $data);
         $user->accesses()->sync($dto->accesses);
 
         if ($user->wasRecentlyCreated) {
@@ -111,6 +131,28 @@ class UserService
         if(!$user) {
             throw ValidationException::withMessages(['wrong_pin' => 'Forkert PIN for medarbejder.']);
         }
+
+        return $user;
+    }
+
+    public function adminUpdatePassword(int $id, string $newPassword) : User
+    {
+        $user = User::findOrFail($id);
+        $user->password = $newPassword;
+        $user->save();
+
+        UpdatedEvent::dispatch($user);
+
+        return $user;
+    }
+
+    public function adminUpdatePin(int $id, string $newPin) : User
+    {
+        $user = User::findOrFail($id);
+        $user->pin = $newPin;
+        $user->save();
+
+        UpdatedEvent::dispatch($user);
 
         return $user;
     }

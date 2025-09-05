@@ -3,6 +3,7 @@
 namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class BulkUpdateRequest extends FormRequest
 {
@@ -11,7 +12,7 @@ class BulkUpdateRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return Auth::user()?->hasAccess('editUsers');
     }
 
     /**

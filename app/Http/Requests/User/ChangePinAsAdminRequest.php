@@ -2,18 +2,20 @@
 
 namespace App\Http\Requests\User;
 
+use App\Utils\Helpers;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
-class UpdateOrCreateRequest extends FormRequest
+class ChangePinAsAdminRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return Auth::user()?->hasAccess('editUsers');
+        $user = Auth::user();
+        return Helpers::isRequestFrom('adminApp') && $user->hasAccess('adminAccess') && $user->hasAccess('editUsers');
     }
 
     /**
@@ -24,13 +26,7 @@ class UpdateOrCreateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => 'sometimes|exists:users,id',
-            'name' => 'required|string|max:255',
-            'email' => "nullable|email|max:255|unique:users,email,{$this->id}",
-            'password' => $this->id ? 'prohibited' : 'nullable|string|min:8',
-            'accesses' => 'nullable|array',
-            'pin' => $this->id ? 'prohibited' : 'required|string|max:4',
-            'username' => "nullable|string|max:255|unique:users,username,{$this->id}",
+            'pin' => 'required|string|max:4',
         ];
     }
 
