@@ -24,7 +24,7 @@ class TakeProductsRequest extends FormRequest
         return [
             'products' => 'required|array',
             'products.*.id' => 'required|exists:inventory_products,id',
-            'products.*.quantity' => 'required|integer|min:1',
+            'products.*.qty' => 'required|integer|min:1',
         ];
     }
 }

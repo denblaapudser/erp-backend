@@ -127,7 +127,7 @@ class InventoryService
         DB::beginTransaction();
         try {
             foreach ($products as $product) {
-                $this->takeProduct($product['id'], $product['quantity']);
+                $this->takeProduct($product['id'], $product['qty']);
             }
             DB::commit();
         } catch (\Throwable $th) {
